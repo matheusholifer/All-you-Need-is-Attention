@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Teste Palográfico</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+}
+
+.timer {
+  font-size: 80px;
+  margin: 20px 0;
+}
+
+.signal {
+  font-size: 50px;
+  color: red;
+  display: none;
+}
+
+button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div id="menu">
+  <h2>Teste Palográfico</h2>
+  <button onclick="startGame()">Começar</button>
+</div>
+
+<div id="game" style="display:none">
+  <div id="timer" class="timer">60</div>
+  <div id="signal" class="signal">SINAL</div>
+  <button onclick="skipToEnd()">Ir para últimos 5s</button>
+</div>
+  <div id="signal" class="signal">SINAL</div>
+</div>
+
+</div>
+
+<script>
+let time = 60;
+let signals = 0;
+let interval;
+
+function startGame() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+
+  runTimer();
+}
+
+function playBeep() {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioCtx.createOscillator();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+  oscillator.connect(audioCtx.destination);
+  oscillator.start();
+  oscillator.stop(audioCtx.currentTime + 0.3);
+}
+
+function skipToEnd(){
+  time = 5;
+}
+
+function runTimer() {
+  interval = setInterval(() => {
+    time--;
+
+    const timerEl = document.getElementById('timer');
+    const signalEl = document.getElementById('signal');
+
+    timerEl.innerText = time;
+
+    if (time > 5) {
+      timerEl.style.color = '#2ecc71';
+    } else if (time > 0) {
+      timerEl.style.color = 'yellow';
+    }
+
+    if (time === 0) {
+      signalEl.style.display = 'block';
+      playBeep();
+      signals++;
+
+      setTimeout(() => {
+        signalEl.style.display = 'none';
+      }, 1000);
+
+      if (signals >= 5) {
+        clearInterval(interval);
+        setTimeout(() => {
+          alert('Teste finalizado');
+          location.reload();
+        }, 500);
+        return;
+      }
+
+      time = 60;
+    }
+
+  }, 1000);
+}
+</script>
+
+</body>
+</html>
