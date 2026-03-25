@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Jogo de Símbolos</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .menu, .game {
+    width: 300px;
+    text-align: center;
+  }
+
+  button {
+    padding: 10px 16px;
+    margin: 6px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .game { display: none; }
+
+  .box {
+    background: #1a1a1a;
+    padding: 25px 20px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .target {
+    margin-bottom: 10px;
+  }
+
+  .target i {
+    font-size: 26px;
+    margin: 0 4px;
+  }
+
+  .symbol i {
+    font-size: 75px;
+    margin: 15px 0;
+  }
+
+  .score {
+    font-size: 18px;
+    margin-top: 10px;
+  }
+
+  i {
+    filter: brightness(1.6) contrast(1.2);
+  }
+</style>
+</head>
+<body>
+
+<div class="menu">
+  <h2>Jogo</h2>
+  <p>Modo:</p>
+  <button onclick="startGame(1)">1 símbolo</button>
+  <button onclick="startGame(2)">2 símbolos</button>
+  <button onclick="startGame(3)">3 símbolos</button>
+  <br>
+  <input type="number" id="timeInput" value="30" min="5"> s
+</div>
+
+<div class="game">
+  <div class="box">
+    <div class="target" id="target"></div>
+    <div class="symbol" id="symbol"></div>
+    <div class="score" id="score">Pontos: 0</div>
+  </div>
+</div>
+
+<script>
+const icons = [
+  "devicon-javascript-plain","devicon-typescript-plain","devicon-python-plain","devicon-java-plain",
+  "devicon-html5-plain","devicon-css3-plain","devicon-react-original","devicon-nodejs-plain",
+  "devicon-csharp-plain","devicon-php-plain","devicon-go-plain","devicon-ruby-plain",
+  "devicon-cplusplus-plain","devicon-c-plain","devicon-swift-plain","devicon-kotlin-plain",
+  "devicon-dart-plain","devicon-angularjs-plain","devicon-vuejs-plain","devicon-bootstrap-plain",
+  "devicon-sass-original","devicon-mysql-plain","devicon-postgresql-plain","devicon-mongodb-plain",
+  "devicon-docker-plain","devicon-kubernetes-plain","devicon-git-plain","devicon-github-original",
+  "devicon-linux-plain","devicon-figma-plain"
+];
+
+let targets = [];
+let currentSymbol = "";
+let score = 0;
+let gameInterval;
+let timeLeft;
+
+// sistema anti-padrão
+let lastSymbol = null;
+let repeatCount = 0;
+const MAX_REPEAT = 2;
+let recentHistory = [];
+const HISTORY_LIMIT = 5;
+
+function getRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function startGame(numTargets) {
+  document.querySelector('.menu').style.display = 'none';
+  document.querySelector('.game').style.display = 'block';
+
+  score = 0;
+  updateScore();
+
+  targets = [];
+  while (targets.length < numTargets) {
+    let icon = getRandom(icons);
+    if (!targets.includes(icon)) targets.push(icon);
+  }
+
+  document.getElementById('target').innerHTML =
+    targets.map(i => `<i class="${i}"></i>`).join(' ');
+
+  timeLeft = parseInt(document.getElementById('timeInput').value);
+
+  nextSymbol();
+
+  gameInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function nextSymbol() {
+  let useTarget = Math.random() < 0.6;
+  let pool;
+
+  if (useTarget) {
+    pool = [...targets];
+  } else {
+    pool = icons.filter(i => !targets.includes(i));
+  }
+
+  let filteredPool = pool.filter(i => !recentHistory.includes(i));
+
+  if (filteredPool.length === 0) {
+    filteredPool = pool;
+  }
+
+  if (repeatCount >= MAX_REPEAT && filteredPool.length > 1) {
+    filteredPool = filteredPool.filter(i => i !== lastSymbol);
+
+    if (filteredPool.length === 0) {
+      filteredPool = pool.filter(i => i !== lastSymbol);
+    }
+  }
+
+  let newSymbol = getRandom(filteredPool);
+
+  if (newSymbol === lastSymbol) {
+    repeatCount++;
+  } else {
+    repeatCount = 0;
+  }
+
+  lastSymbol = newSymbol;
+
+  recentHistory.push(newSymbol);
+  if (recentHistory.length > HISTORY_LIMIT) {
+    recentHistory.shift();
+  }
+
+  currentSymbol = newSymbol;
+
+  document.getElementById('symbol').innerHTML =
+    `<i class="${currentSymbol}"></i>`;
+}
+
+document.addEventListener('mousedown', function(e) {
+  if (document.querySelector('.game').style.display === 'none') return;
+
+  let isCorrect = targets.includes(currentSymbol);
+
+  if (e.button === 0) {
+    score += isCorrect ? 1 : -1;
+  } else if (e.button === 2) {
+    score += !isCorrect ? 1 : -1;
+  }
+
+  updateScore();
+  nextSymbol();
+});
+
+function updateScore() {
+  document.getElementById('score').innerText = `Pontos: ${score}`;
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  alert(`Fim! Pontuação: ${score}`);
+  location.reload();
+}
+
+window.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+
+</body>
+</html>
