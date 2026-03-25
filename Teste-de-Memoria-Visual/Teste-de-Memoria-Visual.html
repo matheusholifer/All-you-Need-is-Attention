@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Jogo da Memória - Programação</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  width: 1000px;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.item {
+  background: #1a1a1a;
+  padding: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item.selected {
+  background: #2ecc71;
+}
+
+.item i {
+  font-size: 38px;
+}
+
+.item.text {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.screen { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div id="menu" class="screen" style="display:block">
+  <h2>Jogo da Memória</h2>
+  <button onclick="startPreparation()">Iniciar</button>
+</div>
+
+<div id="prep" class="screen">
+  <h3>Memorize os itens (1 minuto)</h3>
+  <button onclick="startGame()">Pular</button>
+  <div id="prepGrid" class="grid"></div>
+</div>
+
+<div id="game" class="screen">
+  <h3>Marque o que você viu (1 minuto)</h3>
+  <button onclick="endGame()">Finalizar</button>
+  <div id="gameGrid" class="grid"></div>
+</div>
+
+</div>
+
+<script>
+const icons = [
+"devicon-javascript-plain","devicon-python-plain","devicon-java-plain",
+"devicon-html5-plain","devicon-css3-plain","devicon-react-original",
+"devicon-nodejs-plain","devicon-csharp-plain","devicon-php-plain",
+"devicon-go-plain","devicon-ruby-plain","devicon-cplusplus-plain",
+"devicon-swift-plain","devicon-kotlin-plain","devicon-dart-plain",
+"devicon-angularjs-plain","devicon-vuejs-plain","devicon-bootstrap-plain",
+"devicon-mysql-plain","devicon-postgresql-plain","devicon-mongodb-plain",
+"devicon-docker-plain","devicon-git-plain","devicon-linux-plain"
+];
+
+const words = [
+"VS Code","Eclipse","IntelliJ","PyCharm","Python","Java","C++","JavaScript",
+"Docker","Git","Linux","API","Banco de Dados","Deploy","Debug","Algoritmo",
+"Framework","Frontend","Backend","Fullstack","Compilar","Executar","Testar",
+"Desenvolver","Programar","Analisar","Refatorar","Versionar","Automatizar"
+];
+
+let prepItems = [];
+let gameItems = [];
+let selected = new Set();
+let timer;
+
+function shuffle(arr) {
+  return [...arr].sort(()=>Math.random()-0.5);
+}
+
+function pickUnique(arr, n) {
+  return shuffle(arr).slice(0, n);
+}
+
+function startPreparation() {
+  document.getElementById('menu').style.display='none';
+  document.getElementById('prep').style.display='block';
+
+  selected.clear();
+
+  // 30 itens fixos → 6x5 grid perfeito
+  const uniqueIcons = pickUnique(icons, 15).map(v => ({type:'icon', value:v}));
+  const uniqueWords = pickUnique(words, 15).map(v => ({type:'word', value:v}));
+
+  prepItems = shuffle([...uniqueIcons, ...uniqueWords]);
+
+  renderGrid(prepItems,'prepGrid',false);
+
+  timer = setTimeout(startGame,60000);
+}
+
+function startGame(){
+  clearTimeout(timer);
+
+  document.getElementById('prep').style.display='none';
+  document.getElementById('game').style.display='block';
+
+  selected.clear();
+
+  const iconImpostors = icons.filter(i => !prepItems.some(p => p.value === i));
+  const wordImpostors = words.filter(w => !prepItems.some(p => p.value === w));
+
+  // Mantém exatamente 30 itens (remove 10 originais e adiciona 10 impostores)
+  let base = shuffle(prepItems).slice(0,20);
+
+  const impostors = [
+    ...pickUnique(iconImpostors, 5).map(v => ({type:'icon', value:v})),
+    ...pickUnique(wordImpostors, 5).map(v => ({type:'word', value:v}))
+  ];
+
+  gameItems = shuffle([...base, ...impostors]);
+
+  renderGrid(gameItems,'gameGrid',true);
+
+  timer = setTimeout(endGame,60000);
+}
+
+function renderGrid(items, id, clickable){
+  const grid = document.getElementById(id);
+  grid.innerHTML = '';
+
+  items.forEach((item,index)=>{
+    const div = document.createElement('div');
+    div.className='item';
+
+    if(item.type==='icon'){
+      div.innerHTML = `<i class="${item.value}"></i>`;
+    } else {
+      div.innerText = item.value;
+      div.classList.add('text');
+    }
+
+    if(clickable){
+      div.onclick = ()=>{
+        div.classList.toggle('selected');
+        if(selected.has(index)) selected.delete(index);
+        else selected.add(index);
+      };
+    }
+
+    grid.appendChild(div);
+  });
+}
+
+function endGame(){
+  clearTimeout(timer);
+
+  let score = 0;
+
+  selected.forEach(i=>{
+    let item = gameItems[i];
+    if(prepItems.find(p=>p.value===item.value && p.type===item.type)){
+      score++;
+    } else {
+      score--;
+    }
+  });
+
+  const jogarNovamente = confirm("Pontuação: " + score + "\n\nDeseja jogar novamente?");
+
+  if(jogarNovamente){
+    location.reload();
+  }
+}
+</script>
+
+</body>
+</html>
