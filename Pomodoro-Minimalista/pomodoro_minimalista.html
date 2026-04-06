@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pomodoro Minimalista</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+}
+
+.timer {
+  font-size: 80px;
+  margin: 20px 0;
+}
+
+.status {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 12px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.stats {
+  margin-top: 15px;
+  font-size: 18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="menu">
+  <h2>Pomodoro</h2>
+  <button onclick="startCycle(25)">25 minutos</button>
+  <button onclick="startCycle(50)">50 minutos</button>
+</div>
+
+<div id="game" style="display:none">
+  <div id="status" class="status">Estudando</div>
+  <div id="timer" class="timer">00:00</div>
+  <button onclick="skipToEnd()">Pular para final</button>
+
+  <div class="stats">
+    Tempo estudado: <span id="studyTime">0</span> min
+  </div>
+</div>
+
+</div>
+
+<script>
+let time = 0;
+let interval;
+let mode = "study"; // study ou break
+let studyMinutes = 0;
+let currentStudy = 25;
+
+function startCycle(minutes) {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+
+  currentStudy = minutes;
+  startStudy(minutes);
+}
+
+function startStudy(minutes) {
+  mode = "study";
+  time = minutes * 60;
+
+  document.getElementById('status').innerText = "Estudando";
+
+  runTimer(() => {
+    playBeep();
+    studyMinutes += currentStudy;
+    updateStats();
+
+    if (currentStudy === 25) {
+      startBreak(5);
+    } else {
+      startBreak(10);
+    }
+  });
+}
+
+function startBreak(minutes) {
+  mode = "break";
+  time = minutes * 60;
+
+  document.getElementById('status').innerText = "Descanso";
+
+  runTimer(() => {
+    playBeep();
+
+    setTimeout(() => {
+      let choice = confirm("Novo ciclo de 25 minutos?\nCancelar = 50 minutos");
+
+      if (choice) {
+        startStudy(25);
+      } else {
+        startStudy(50);
+      }
+    }, 500);
+  });
+}
+
+function runTimer(callback) {
+  clearInterval(interval);
+
+  interval = setInterval(() => {
+    time--;
+
+    updateDisplay();
+
+    if (time <= 5) {
+      document.getElementById('timer').style.color = "yellow";
+    } else {
+      document.getElementById('timer').style.color = "#2ecc71";
+    }
+
+    if (time <= 0) {
+      clearInterval(interval);
+      callback();
+    }
+  }, 1000);
+}
+
+function updateDisplay() {
+  let min = Math.floor(time / 60);
+  let sec = time % 60;
+
+  document.getElementById('timer').innerText =
+    String(min).padStart(2, '0') + ":" +
+    String(sec).padStart(2, '0');
+}
+
+function skipToEnd() {
+  time = 5;
+}
+
+function updateStats() {
+  document.getElementById('studyTime').innerText = studyMinutes;
+}
+
+function playBeep() {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+  osc.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
+}
+</script>
+
+</body>
+</html>
