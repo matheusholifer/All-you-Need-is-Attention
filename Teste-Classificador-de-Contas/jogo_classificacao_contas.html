@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jogo das Contas Contábeis</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --panel-2: #1e2330;
+      --text: #f5f7fb;
+      --muted: #aab3c5;
+      --accent: #6ee7b7;
+      --accent-2: #60a5fa;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(96,165,250,.14), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(110,231,183,.10), transparent 40%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .brand p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      font-size: 14px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .card h2, .card h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      margin: 10px 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .mode-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .mode {
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+    }
+
+    .mode strong { display: block; margin-bottom: 4px; }
+    .mode span { color: var(--muted); font-size: 13px; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button, select {
+      border: 0;
+      outline: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .12s ease, background .12s ease;
+    }
+
+    button:hover, select:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-primary { background: var(--accent); color: #07120d; font-weight: 700; }
+    .btn-secondary { background: rgba(96,165,250,.18); color: var(--text); border: 1px solid rgba(96,165,250,.30); }
+    .btn-ghost { background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--border); }
+
+    .question-wrap {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .question-card {
+      padding: 28px;
+    }
+
+    .question-title {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .account-name {
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 8px 0 16px;
+    }
+
+    .account-subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .answer-btn {
+      width: 100%;
+      text-align: left;
+      padding: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      min-height: 74px;
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .answer-btn:hover { background: rgba(255,255,255,.08); }
+    .answer-btn.correct { background: rgba(110,231,183,.17); border-color: rgba(110,231,183,.45); }
+    .answer-btn.wrong { background: rgba(251,113,133,.14); border-color: rgba(251,113,133,.45); }
+    .answer-btn:disabled { cursor: not-allowed; opacity: .95; }
+
+    .letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      margin-right: 10px;
+      background: rgba(255,255,255,.10);
+      font-weight: 700;
+    }
+
+    .option-title { display: inline-block; vertical-align: middle; font-weight: 700; }
+    .option-desc { display: block; margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .side {
+      display: grid;
+      gap: 18px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+    }
+
+    .legend-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+    }
+
+    .legend-item strong { display: block; margin-bottom: 4px; }
+    .legend-item span { color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    .feedback {
+      min-height: 110px;
+      border-radius: 16px;
+      padding: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+    }
+
+    .feedback.good { border-color: rgba(110,231,183,.45); background: rgba(110,231,183,.08); }
+    .feedback.bad { border-color: rgba(251,113,133,.45); background: rgba(251,113,133,.08); }
+
+    .feedback strong { display: block; margin-bottom: 6px; }
+    .feedback p { margin: 0; color: var(--muted); line-height: 1.45; }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar > div {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width .25s ease;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .result-box {
+      text-align: center;
+      padding: 30px 22px;
+    }
+
+    .big-score {
+      font-size: clamp(42px, 10vw, 72px);
+      font-weight: 900;
+      margin: 10px 0 8px;
+    }
+
+    .small-muted { color: var(--muted); }
+
+    @media (max-width: 900px) {
+      .hero, .question-wrap { grid-template-columns: 1fr; }
+      .answers { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .stats { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Jogo das Contas Contábeis</h1>
+        <p>Treine a classificação das contas de balanço patrimonial e de resultado.</p>
+      </div>
+      <div class="stats">
+        <div class="chip">Acertos: <strong id="score">0</strong></div>
+        <div class="chip">Erros: <strong id="mistakes">0</strong></div>
+        <div class="chip">Questão: <strong id="progress">0/0</strong></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- MENU -->
+      <section id="menuScreen" class="screen active">
+        <div class="hero">
+          <div class="card">
+            <h2>Como funciona</h2>
+            <p>Vai aparecer o nome de uma conta. Você deve escolher a letra correta entre <strong>A</strong> e <strong>E</strong>.</p>
+            <div class="mode-list">
+              <div class="mode"><strong>A — Ativo Circulante</strong><span>Caixa, bancos, clientes, estoques, aplicações de curto prazo e outras contas do ativo circulante.</span></div>
+              <div class="mode"><strong>B — Ativo Não Circulante</strong><span>Realizável a longo prazo, investimentos, imobilizado e intangível.</span></div>
+              <div class="mode"><strong>C — Passivo</strong><span>Fornecedores, empréstimos, salários a pagar, impostos a recolher e demais obrigações.</span></div>
+              <div class="mode"><strong>D — Patrimônio Líquido</strong><span>Capital social, reservas, lucros acumulados, ações em tesouraria e ajustes do PL.</span></div>
+              <div class="mode"><strong>E — Resultado</strong><span>Receitas, custos, despesas, deduções, tributos sobre vendas e IRPJ/CSLL.</span></div>
+            </div>
+            <div class="controls">
+              <select id="questionCount">
+                <option value="10">10 perguntas</option>
+                <option value="20" selected>20 perguntas</option>
+                <option value="30">30 perguntas</option>
+                <option value="40">40 perguntas</option>
+              </select>
+              <button class="btn-primary" onclick="startGame()">Iniciar jogo</button>
+              <button class="btn-ghost" onclick="toggleStudyMode()">Modo de estudo</button>
+            </div>
+            <p class="footer-note">Dica: depois de responder, leia a explicação do tipo exato da conta para fixar melhor.</p>
+          </div>
+
+          <div class="card">
+            <h3>O que este jogo cobre</h3>
+            <p>Usei um banco de contas com exemplos de:</p>
+            <div class="legend">
+              <div class="legend-item"><strong>Balanço patrimonial</strong><span>Ativo circulante, ativo não circulante, passivo e patrimônio líquido.</span></div>
+              <div class="legend-item"><strong>Ativo não circulante</strong><span>Realizável a longo prazo, investimentos, imobilizado e intangível.</span></div>
+              <div class="legend-item"><strong>Resultado</strong><span>Receitas, custos, despesas, deduções e tributos sobre o lucro.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDY -->
+      <section id="studyScreen" class="screen">
+        <div class="card">
+          <h2>Resumo rápido das classes</h2>
+          <div class="legend">
+            <div class="legend-item"><strong>A — Ativo Circulante</strong><span>Recursos que viram dinheiro ou são consumidos no curto prazo.</span></div>
+            <div class="legend-item"><strong>B — Ativo Não Circulante</strong><span>Inclui realizável a longo prazo, investimentos, imobilizado e intangível.</span></div>
+            <div class="legend-item"><strong>C — Passivo</strong><span>Obrigações e dívidas da empresa.</span></div>
+            <div class="legend-item"><strong>D — Patrimônio Líquido</strong><span>Capital próprio da empresa.</span></div>
+            <div class="legend-item"><strong>E — Resultado</strong><span>Contas que entram na DRE: receitas, custos, despesas e deduções.</span></div>
+          </div>
+          <div class="controls">
+            <button class="btn-secondary" onclick="toggleStudyMode()">Voltar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME -->
+      <section id="gameScreen" class="screen">
+        <div class="question-wrap">
+          <div class="card question-card">
+            <div class="question-title" id="questionTitle">Classifique a conta</div>
+            <div class="account-name" id="accountName">Conta</div>
+            <div class="account-subtitle" id="accountHint">Escolha a categoria correta.</div>
+
+            <div class="answers" id="answers"></div>
+
+            <div class="progress-bar"><div id="progressBarFill"></div></div>
+            <div class="controls" style="margin-top:18px;">
+              <button class="btn-secondary" onclick="skipQuestion()">Pular</button>
+              <button class="btn-ghost" onclick="finishGame()">Finalizar</button>
+            </div>
+            <p class="footer-note">Atalhos: use as teclas A, B, C, D e E.</p>
+          </div>
+
+          <div class="side">
+            <div class="card">
+              <h3>Legenda das alternativas</h3>
+              <div class="legend">
+                <div class="legend-item"><strong>A</strong><span>Ativo Circulante</span></div>
+                <div class="legend-item"><strong>B</strong><span>Ativo Não Circulante</span></div>
+                <div class="legend-item"><strong>C</strong><span>Passivo</span></div>
+                <div class="legend-item"><strong>D</strong><span>Patrimônio Líquido</span></div>
+                <div class="legend-item"><strong>E</strong><span>Resultado</span></div>
+              </div>
+            </div>
+
+            <div id="feedbackBox" class="feedback">
+              <strong>Pronto para começar</strong>
+              <p>Escolha uma categoria e veja a explicação. O jogo mostra o tipo exato da conta para ajudar na memorização.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section id="resultScreen" class="screen">
+        <div class="card result-box">
+          <h2>Fim de jogo</h2>
+          <div class="big-score" id="finalScore">0</div>
+          <p class="small-muted" id="finalText">Você concluiu o treino.</p>
+          <div class="controls" style="justify-content:center; margin-top:18px;">
+            <button class="btn-primary" onclick="restartGame()">Jogar novamente</button>
+            <button class="btn-secondary" onclick="goMenu()">Voltar ao menu</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const categories = [
+      {
+        key: 'A',
+        title: 'Ativo Circulante',
+        short: 'Ativo Circulante',
+        desc: 'Caixa, bancos, clientes, estoques, aplicações de curto prazo e contas realizáveis no curto prazo.'
+      },
+      {
+        key: 'B',
+        title: 'Ativo Não Circulante',
+        short: 'Ativo Não Circulante',
+        desc: 'Realizável a longo prazo, investimentos, imobilizado e intangível.'
+      },
+      {
+        key: 'C',
+        title: 'Passivo',
+        short: 'Passivo',
+        desc: 'Obrigações com fornecedores, bancos, impostos, salários e outras dívidas.'
+      },
+      {
+        key: 'D',
+        title: 'Patrimônio Líquido',
+        short: 'Patrimônio Líquido',
+        desc: 'Capital social, reservas, lucros acumulados, prejuízos acumulados e ajustes do PL.'
+      },
+      {
+        key: 'E',
+        title: 'Resultado',
+        short: 'Resultado',
+        desc: 'Receitas, custos, despesas, deduções e tributos sobre vendas e sobre o lucro.'
+      }
+    ];
+
+    // Banco de contas com a classificação principal e a subclasse exata.
+    const accountBank = [
+      // ATIVO CIRCULANTE
+      { name: 'Caixa', category: 'A', detail: 'Ativo Circulante > Disponível' },
+      { name: 'Bancos Conta Movimento', category: 'A', detail: 'Ativo Circulante > Disponível' },
+      { name: 'Clientes', category: 'A', detail: 'Ativo Circulante > Direitos a receber' },
+      { name: 'Duplicatas a Receber', category: 'A', detail: 'Ativo Circulante > Direitos a receber' },
+      { name: 'Estoques', category: 'A', detail: 'Ativo Circulante > Estoques' },
+      { name: 'Aplicações Financeiras', category: 'A', detail: 'Ativo Circulante > Aplicações de curto prazo' },
+      { name: 'ICMS a Recuperar', category: 'A', detail: 'Ativo Circulante > Tributos a recuperar' },
+      { name: 'PIS a Recuperar', category: 'A', detail: 'Ativo Circulante > Tributos a recuperar' },
+      { name: 'COFINS a Recuperar', category: 'A', detail: 'Ativo Circulante > Tributos a recuperar' },
+      { name: 'Despesas Antecipadas', category: 'A', detail: 'Ativo Circulante > Despesas antecipadas' },
+      { name: 'Juros a Receber', category: 'A', detail: 'Ativo Circulante > Direitos a receber' },
+      { name: 'Aluguéis a Receber', category: 'A', detail: 'Ativo Circulante > Direitos a receber' },
+      { name: 'Adiantamento a Fornecedores', category: 'A', detail: 'Ativo Circulante > Adiantamentos' },
+      { name: 'Adiantamento a Empregados', category: 'A', detail: 'Ativo Circulante > Adiantamentos' },
+      { name: 'Impostos a Recuperar', category: 'A', detail: 'Ativo Circulante > Tributos a recuperar' },
+      { name: 'Instrumentos Financeiros Derivativos', category: 'A', detail: 'Ativo Circulante > Aplicações / instrumentos financeiros' },
+      { name: 'Outras Contas a Receber', category: 'A', detail: 'Ativo Circulante > Outros direitos' },
+
+      // ATIVO NÃO CIRCULANTE
+      { name: 'Clientes (LP)', category: 'B', detail: 'Ativo Não Circulante > Realizável a Longo Prazo' },
+      { name: 'Partes Relacionadas', category: 'B', detail: 'Ativo Não Circulante > Realizável a Longo Prazo' },
+      { name: 'Aplicações Financeiras Restritas', category: 'B', detail: 'Ativo Não Circulante > Realizável a Longo Prazo' },
+      { name: 'Impostos Diferidos', category: 'B', detail: 'Ativo Não Circulante > Realizável a Longo Prazo' },
+      { name: 'Outras Contas a Receber (LP)', category: 'B', detail: 'Ativo Não Circulante > Realizável a Longo Prazo' },
+      { name: 'Empréstimos a Receber (LP)', category: 'B', detail: 'Ativo Não Circulante > Realizável a Longo Prazo' },
+      { name: 'Outros Investimentos', category: 'B', detail: 'Ativo Não Circulante > Investimentos' },
+      { name: 'Participações Societárias', category: 'B', detail: 'Ativo Não Circulante > Investimentos' },
+      { name: 'Empresas Controladas', category: 'B', detail: 'Ativo Não Circulante > Investimentos' },
+      { name: 'Imóveis', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Veículos', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Máquinas e Equipamentos', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Equipamentos de Informática', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Computadores', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Móveis e Utensílios', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Instalações', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Terrenos', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Edificações', category: 'B', detail: 'Ativo Não Circulante > Imobilizado' },
+      { name: 'Software', category: 'B', detail: 'Ativo Não Circulante > Intangível' },
+      { name: 'Marcas e Patentes', category: 'B', detail: 'Ativo Não Circulante > Intangível' },
+      { name: 'Direitos Autorais', category: 'B', detail: 'Ativo Não Circulante > Intangível' },
+
+      // PASSIVO
+      { name: 'Fornecedores', category: 'C', detail: 'Passivo Circulante > Obrigações com fornecedores' },
+      { name: 'Duplicatas a Pagar', category: 'C', detail: 'Passivo Circulante > Obrigações com fornecedores' },
+      { name: 'Empréstimos Bancários', category: 'C', detail: 'Passivo Circulante > Empréstimos' },
+      { name: 'Salários a Pagar', category: 'C', detail: 'Passivo Circulante > Obrigações trabalhistas' },
+      { name: 'Encargos Sociais a Recolher', category: 'C', detail: 'Passivo Circulante > Obrigações trabalhistas' },
+      { name: 'FGTS a Recolher', category: 'C', detail: 'Passivo Circulante > Obrigações trabalhistas' },
+      { name: 'INSS a Recolher', category: 'C', detail: 'Passivo Circulante > Obrigações trabalhistas' },
+      { name: 'ICMS a Recolher', category: 'C', detail: 'Passivo Circulante > Tributos a recolher' },
+      { name: 'PIS a Recolher', category: 'C', detail: 'Passivo Circulante > Tributos a recolher' },
+      { name: 'COFINS a Recolher', category: 'C', detail: 'Passivo Circulante > Tributos a recolher' },
+      { name: 'IRPJ a Recolher', category: 'C', detail: 'Passivo Circulante > Tributos a recolher' },
+      { name: 'CSLL a Recolher', category: 'C', detail: 'Passivo Circulante > Tributos a recolher' },
+      { name: 'Obrigações Tributárias', category: 'C', detail: 'Passivo Circulante > Tributos / obrigações' },
+      { name: 'Aluguéis a Pagar', category: 'C', detail: 'Passivo Circulante > Outras obrigações' },
+      { name: 'Outras Contas a Pagar', category: 'C', detail: 'Passivo Circulante > Outras obrigações' },
+      { name: 'Dividendos a Pagar', category: 'C', detail: 'Passivo Circulante > Obrigações com sócios' },
+      { name: 'Empréstimos e Financiamentos', category: 'C', detail: 'Passivo Não Circulante > Empréstimos e financiamentos' },
+      { name: 'Parcelamentos Tributários e Previdenciários', category: 'C', detail: 'Passivo Não Circulante > Parcelamentos' },
+      { name: 'Provisões para Riscos', category: 'C', detail: 'Passivo Não Circulante > Provisões' },
+      { name: 'Benefícios a Empregados (LP)', category: 'C', detail: 'Passivo Não Circulante > Benefícios a empregados' },
+      { name: 'Obrigações por Incentivos Fiscais', category: 'C', detail: 'Passivo Não Circulante > Obrigações específicas' },
+
+      // PATRIMÔNIO LÍQUIDO
+      { name: 'Capital Social', category: 'D', detail: 'Patrimônio Líquido > Capital' },
+      { name: 'Reserva Legal', category: 'D', detail: 'Patrimônio Líquido > Reserva de lucros' },
+      { name: 'Reservas de Lucros', category: 'D', detail: 'Patrimônio Líquido > Reserva de lucros' },
+      { name: 'Reserva de Capital', category: 'D', detail: 'Patrimônio Líquido > Reserva de capital' },
+      { name: 'Ajuste de Avaliação Patrimonial', category: 'D', detail: 'Patrimônio Líquido > Ajustes do PL' },
+      { name: 'Lucros Acumulados', category: 'D', detail: 'Patrimônio Líquido > Resultado acumulado' },
+      { name: 'Prejuízos Acumulados', category: 'D', detail: 'Patrimônio Líquido > Resultado acumulado' },
+      { name: 'Ações em Tesouraria', category: 'D', detail: 'Patrimônio Líquido > Conta redutora' },
+      { name: 'Dividendos Adicionais Propostos', category: 'D', detail: 'Patrimônio Líquido > Destinação do resultado' },
+
+      // RESULTADO
+      { name: 'Receita de Vendas', category: 'E', detail: 'Resultado > Receita operacional' },
+      { name: 'Receita de Serviços', category: 'E', detail: 'Resultado > Receita operacional' },
+      { name: 'Receita Financeira', category: 'E', detail: 'Resultado > Receita financeira' },
+      { name: 'Receita de Aluguel', category: 'E', detail: 'Resultado > Receita operacional' },
+      { name: 'Ganhos na Venda de Imobilizado', category: 'E', detail: 'Resultado > Ganho não operacional' },
+      { name: 'Receita Líquida Venda de Imobilizado', category: 'E', detail: 'Resultado > Receita não recorrente' },
+      { name: 'Descontos Obtidos', category: 'E', detail: 'Resultado > Receita financeira / redutora de despesas' },
+      { name: 'ICMS sobre Vendas', category: 'E', detail: 'Resultado > Dedução da receita' },
+      { name: 'PIS sobre Vendas', category: 'E', detail: 'Resultado > Dedução da receita' },
+      { name: 'COFINS sobre Vendas', category: 'E', detail: 'Resultado > Dedução da receita' },
+      { name: 'Devoluções de Venda', category: 'E', detail: 'Resultado > Dedução da receita' },
+      { name: 'Abatimentos sobre Vendas', category: 'E', detail: 'Resultado > Dedução da receita' },
+      { name: 'CMV', category: 'E', detail: 'Resultado > Custo' },
+      { name: 'Custo de Mercadorias e Serviços', category: 'E', detail: 'Resultado > Custo' },
+      { name: 'Salários', category: 'E', detail: 'Resultado > Despesa de pessoal' },
+      { name: 'Encargos Sociais', category: 'E', detail: 'Resultado > Despesa de pessoal' },
+      { name: 'Despesas Administrativas', category: 'E', detail: 'Resultado > Despesa administrativa' },
+      { name: 'Despesas com Vendas', category: 'E', detail: 'Resultado > Despesa comercial' },
+      { name: 'Despesas com Marketing', category: 'E', detail: 'Resultado > Despesa comercial' },
+      { name: 'Despesas Bancárias', category: 'E', detail: 'Resultado > Despesa financeira' },
+      { name: 'Juros sobre Empréstimos', category: 'E', detail: 'Resultado > Despesa financeira' },
+      { name: 'Depreciação', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Depreciação e Amortização', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Água, Energia e Internet', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Água e Esgoto', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Telefone', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Café e Lanches', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Material de Escritório', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Combustível', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Manutenção', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Seguros', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Propaganda', category: 'E', detail: 'Resultado > Despesa comercial' },
+      { name: 'Fretes', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'Outras Despesas Operacionais', category: 'E', detail: 'Resultado > Despesa operacional' },
+      { name: 'IRPJ', category: 'E', detail: 'Resultado > Tributo sobre o lucro' },
+      { name: 'CSLL', category: 'E', detail: 'Resultado > Tributo sobre o lucro' },
+      { name: 'Adicional de IRPJ', category: 'E', detail: 'Resultado > Tributo sobre o lucro' },
+      { name: 'ARE', category: 'E', detail: 'Resultado > Conta de encerramento' }
+    ];
+
+    const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+
+    let deck = [];
+    let currentIndex = 0;
+    let score = 0;
+    let mistakes = 0;
+    let answered = false;
+    let totalQuestions = 20;
+    let shuffledQuestions = [];
+
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function updateStats() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('mistakes').textContent = mistakes;
+      document.getElementById('progress').textContent = `${Math.min(currentIndex + 1, totalQuestions)}/${totalQuestions}`;
+      const pct = totalQuestions ? ((currentIndex) / totalQuestions) * 100 : 0;
+      document.getElementById('progressBarFill').style.width = `${Math.min(pct, 100)}%`;
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function toggleStudyMode() {
+      const study = document.getElementById('studyScreen');
+      const menu = document.getElementById('menuScreen');
+      const game = document.getElementById('gameScreen');
+      const result = document.getElementById('resultScreen');
+      const active = study.classList.contains('active');
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      if (active) {
+        menu.classList.add('active');
+      } else {
+        study.classList.add('active');
+      }
+    }
+
+    function startGame() {
+      totalQuestions = parseInt(document.getElementById('questionCount').value, 10);
+      score = 0;
+      mistakes = 0;
+      currentIndex = 0;
+      answered = false;
+      updateStats();
+
+      deck = shuffle(accountBank);
+      // Garante uma boa variedade, mas sem repetir até terminar o lote.
+      shuffledQuestions = deck.slice(0, Math.min(totalQuestions, deck.length));
+
+      showScreen('gameScreen');
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      answered = false;
+      const q = shuffledQuestions[currentIndex];
+      if (!q) {
+        finishGame();
+        return;
+      }
+
+      document.getElementById('accountName').textContent = q.name;
+      document.getElementById('accountHint').textContent = 'Marque a classe correta da conta.';
+      document.getElementById('questionTitle').textContent = `Questão ${currentIndex + 1} de ${totalQuestions}`;
+      document.getElementById('feedbackBox').className = 'feedback';
+      document.getElementById('feedbackBox').innerHTML = `
+        <strong>Analise a conta</strong>
+        <p>Escolha entre A, B, C, D e E. Depois você verá a classificação exata.</p>
+      `;
+
+      const answers = document.getElementById('answers');
+      answers.innerHTML = '';
+
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.innerHTML = `
+          <span class="letter">${cat.key}</span>
+          <span class="option-title">${cat.title}</span>
+          <span class="option-desc">${cat.desc}</span>
+        `;
+        btn.onclick = () => answer(cat.key, btn);
+        answers.appendChild(btn);
+      });
+
+      updateStats();
+      document.getElementById('progressBarFill').style.width = `${(currentIndex / totalQuestions) * 100}%`;
+    }
+
+    function answer(choice, clickedBtn) {
+      if (answered) return;
+      answered = true;
+
+      const q = shuffledQuestions[currentIndex];
+      const buttons = [...document.querySelectorAll('.answer-btn')];
+      const correctBtn = buttons.find(b => b.innerText.includes(q.category));
+
+      buttons.forEach(btn => btn.disabled = true);
+
+      if (choice === q.category) {
+        score++;
+        clickedBtn.classList.add('correct');
+        document.getElementById('feedbackBox').className = 'feedback good';
+        document.getElementById('feedbackBox').innerHTML = `
+          <strong>Correto!</strong>
+          <p><strong>${q.name}</strong> é classificada como <strong>${getCategoryLabel(q.category)}</strong>.<br>${q.detail}</p>
+        `;
+      } else {
+        mistakes++;
+        clickedBtn.classList.add('wrong');
+        if (correctBtn) correctBtn.classList.add('correct');
+        document.getElementById('feedbackBox').className = 'feedback bad';
+        document.getElementById('feedbackBox').innerHTML = `
+          <strong>Resposta errada</strong>
+          <p><strong>${q.name}</strong> pertence a <strong>${getCategoryLabel(q.category)}</strong>.<br>${q.detail}</p>
+        `;
+      }
+
+      updateStats();
+      document.getElementById('progressBarFill').style.width = `${((currentIndex + 1) / totalQuestions) * 100}%`;
+
+      setTimeout(() => {
+        currentIndex++;
+        if (currentIndex >= totalQuestions) {
+          finishGame();
+        } else {
+          renderQuestion();
+        }
+      }, 1200);
+    }
+
+    function getCategoryLabel(letter) {
+      return categories.find(c => c.key === letter)?.title || letter;
+    }
+
+    function skipQuestion() {
+      if (!shuffledQuestions.length) return;
+      if (answered) return;
+      const q = shuffledQuestions[currentIndex];
+      mistakes++;
+      answered = true;
+      document.getElementById('feedbackBox').className = 'feedback bad';
+      document.getElementById('feedbackBox').innerHTML = `
+        <strong>Questão pulada</strong>
+        <p><strong>${q.name}</strong> é <strong>${q.detail}</strong> e pertence a <strong>${getCategoryLabel(q.category)}</strong>.</p>
+      `;
+      updateStats();
+      setTimeout(() => {
+        currentIndex++;
+        if (currentIndex >= totalQuestions) finishGame();
+        else renderQuestion();
+      }, 900);
+    }
+
+    function finishGame() {
+      document.getElementById('finalScore').textContent = `${score}/${totalQuestions}`;
+      document.getElementById('finalText').textContent = `Acertos: ${score} • Erros: ${mistakes} • Aproveite o resumo para revisar as contas que errou.`;
+      showScreen('resultScreen');
+      updateStats();
+      document.getElementById('progressBarFill').style.width = '100%';
+    }
+
+    function restartGame() {
+      startGame();
+    }
+
+    function goMenu() {
+      showScreen('menuScreen');
+    }
+
+    function handleKey(e) {
+      const key = e.key.toLowerCase();
+      if (!document.getElementById('gameScreen').classList.contains('active')) return;
+      const map = { a: 'A', b: 'B', c: 'C', d: 'D', e: 'E' };
+      if (map[key]) {
+        const btns = [...document.querySelectorAll('.answer-btn')];
+        const btn = btns.find(b => b.querySelector('.letter')?.textContent === map[key]);
+        if (btn && !btn.disabled) btn.click();
+      }
+    }
+
+    document.addEventListener('keydown', handleKey);
+    updateStats();
+  </script>
+</body>
+</html>
